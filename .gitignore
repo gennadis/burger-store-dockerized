@@ -1,0 +1,14 @@
+.DS_Store
+__pycache__/
+venv
+env
+.env
+
+*.sqlite3
+
+bundles/**
+node_modules/
+media/
+staticfiles/
+.parcel-cache
+
