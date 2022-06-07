@@ -17,7 +17,7 @@ services:
   frontend:
     build: ./frontend
     container_name: burger-star-frontend
-    command: ./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
+    command: ./node_modules/.bin/parcel watch bundles-src/index.js --dist-dir bundles --public-url="./"
     volumes:
       - bundles_volume:/usr/src/app/bundles
 
