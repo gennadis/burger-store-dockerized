@@ -26,6 +26,8 @@ RUN addgroup -S burger && adduser -S burger -G burger
 ENV HOME=/home/burger
 ENV APP_HOME=/home/burger/web
 RUN mkdir $APP_HOME
+RUN mkdir $APP_HOME/staticfiles
+RUN mkdir $APP_HOME/mediafiles
 WORKDIR $APP_HOME
 
 RUN apk update && apk add libpq libjpeg

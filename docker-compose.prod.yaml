@@ -7,22 +7,22 @@ services:
       dockerfile: Dockerfile
     container_name: burger-star-backend
     command: gunicorn star_burger.wsgi:application --bind 0.0.0.0:8000
-    # volumes:
-      # - ./backend/:/usr/src/app/
-    ports:
-      - 8000:8000
+    restart: always
+    volumes:
+      - static_volume:/home/burger/web/staticfiles
+      - media_volume:/home/burger/web/mediafiles
+    expose:
+      - 8000
     env_file:
       - ./.env.prod
     depends_on:
       - db
-
   frontend:
     build: ./frontend
     container_name: burger-star-frontend
     command: ./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
     volumes:
       - bundles_volume:/usr/src/app/bundles
-
   db:
     image: postgres:14.0-alpine
     container_name: burger-star-postgres
@@ -30,7 +30,19 @@ services:
       - postgres_volume:/var/lib/postgresql/data/
     env_file:
       - ./.env.dev
+  nginx:
+    build: ./production/nginx
+    container_name: burger-star-nginx
+    volumes:
+      - static_volume:/home/burger/web/staticfiles
+      - media_volume:/home/burger/web/mediafiles
+    ports:
+      - 80:80
+    depends_on:
+      - backend
 
 volumes:
   postgres_volume:
   bundles_volume:
+  static_volume:
+  media_volume:
