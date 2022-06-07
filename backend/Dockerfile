@@ -1,32 +1,45 @@
-# pull official base image
-FROM python:3.9-alpine
+##### BUILDING STAGE #####
+FROM python:3.9-alpine as builder
 
-# set work directory
 WORKDIR /usr/src/app
 
-# set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# install `pillow` and `psycopg2` dependencies
+# add `pillow` and `psycopg2` dependencies
 RUN apk update && apk add \
     gcc \
     musl-dev \
     jpeg-dev \
     zlib-dev
 
-# install dependencies
-RUN pip install --upgrade pip
 COPY ./requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/app/wheels -r requirements.txt
 
-# copy entrypoint.sh
+
+##### RELEASE STAGE #####
+FROM python:3.9-alpine
+
+RUN mkdir -p /home/burger-store
+RUN addgroup -S burger && adduser -S burger -G burger
+
+ENV HOME=/home/burger
+ENV APP_HOME=/home/burger/web
+RUN mkdir $APP_HOME
+WORKDIR $APP_HOME
+
+RUN apk update && apk add libpq libjpeg
+COPY --from=builder /usr/src/app/wheels /wheels
+COPY --from=builder /usr/src/app/requirements.txt .
+RUN pip install --no-cache /wheels/*
+
 COPY ./entrypoint.sh .
-RUN sed -i 's/\r$//g' /usr/src/app/entrypoint.sh
-RUN chmod +x /usr/src/app/entrypoint.sh
+RUN sed -i 's/\r$//g' $APP_HOME/entrypoint.sh
+RUN chmod +x $APP_HOME/entrypoint.sh
 
-# copy project
-COPY . .
+COPY . $APP_HOME
 
-# run entrypoint.sh
-ENTRYPOINT ["/usr/src/app/entrypoint.sh"]
+RUN chown -R burger:burger $APP_HOME
+USER burger
+
+ENTRYPOINT ["/home/burger/web/entrypoint.sh"]
