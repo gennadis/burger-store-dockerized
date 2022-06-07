@@ -11,7 +11,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = os.getenv("DEBUG", default="False").lower() == "true"
-DATABASE_URL = os.getenv("DATABASE_URL")
+
 YANDEX_APIKEY = os.getenv("YANDEX_APIKEY")
 ROLLBAR_TOKEN = os.getenv("ROLLBAR_TOKEN", default="")
 ROLLBAR_ENVIRONMENT = os.getenv("ROLLBAR_ENVIRONMENT", default="development")
@@ -98,7 +98,15 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 MEDIA_URL = "/media/"
 
 DATABASES = {
-    "default": dj_database_url.config(default=DATABASE_URL),
+    # "prod": dj_database_url.config(default=os.getenv("DATABASE_URL")),
+    "default": {
+        "ENGINE": os.getenv("POSTGRES_ENGINE"),
+        "NAME": os.getenv("POSTGRES_DATABASE"),
+        "USER": os.getenv("POSTGRES_USER"),
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
+        "HOST": os.getenv("POSTGRES_HOST"),
+        "PORT": os.getenv("POSTGRES_PORT"),
+    },
 }
 
 AUTH_PASSWORD_VALIDATORS = [
