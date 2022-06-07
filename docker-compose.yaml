@@ -1,8 +1,9 @@
 version: '3.8'
 
 services:
-  web:
+  backend:
     build: ./backend
+    container_name: burger-star-backend
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - ./backend/:/usr/src/app/
@@ -10,3 +11,25 @@ services:
       - 8000:8000
     env_file:
       - ./.env.dev
+    depends_on:
+      - db
+
+  frontend:
+    build: ./frontend
+    container_name: burger-star-frontend
+    command: ./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
+    volumes:
+      - bundles_volume:/usr/src/app/bundles
+
+  db:
+    image: postgres:14.0-alpine
+    container_name: burger-star-postgres
+    volumes:
+      - postgres_volume:/var/lib/postgresql/data/
+    env_file:
+      - ./.env.dev
+
+volumes:
+  postgres_volume:
+  bundles_volume:
+  
