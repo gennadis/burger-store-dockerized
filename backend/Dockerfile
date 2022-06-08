@@ -20,7 +20,7 @@ RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/app/wheels -r requir
 ##### RELEASE STAGE #####
 FROM python:3.9-alpine
 
-RUN mkdir -p /home/burger-store
+RUN mkdir -p /home/burger
 RUN addgroup -S burger && adduser -S burger -G burger
 
 ENV HOME=/home/burger
