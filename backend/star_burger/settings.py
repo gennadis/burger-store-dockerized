@@ -138,6 +138,12 @@ STATIC_URL = "/static/"
 
 INTERNAL_IPS = ["127.0.0.1"]
 
+# Add docker container IP address for `Django Debug Toolbar`
+if DEBUG:
+    import socket
+
+    hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
+    INTERNAL_IPS += [".".join(ip.split(".")[:-1] + ["1"]) for ip in ips]
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "assets"),
