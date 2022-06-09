@@ -13,5 +13,7 @@ RUN ./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --p
 ##### RELEASE STAGE #####
 FROM node:18-alpine
 
-COPY --from=build /usr/src/app//node_modules/.bin/ /home/burger/web/node_modules/.bin/
-COPY --from=build /usr/src/app/bundles /home/burger/web/bundles
+WORKDIR /home/burger/web
+
+COPY --from=build /usr/src/app/bundles ./bundles
+COPY --from=build /usr/src/app/node_modules/ ./node_modules
