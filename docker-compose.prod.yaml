@@ -34,17 +34,21 @@ services:
       - ./.env
 
   nginx:
-    build: ./production/nginx
     container_name: burger-star-nginx
+    image: nginx:1.21-alpine
     ports:
       - 80:80
+      - 443:443
     volumes:
+      - ./production/nginx:/etc/nginx/conf.d
       - static_volume:/home/burger/web/staticfiles
       - media_volume:/home/burger/web/media
     restart: always
     depends_on:
-      - web
+      - backend
 
+  certbot:
+    image: certbot/certbot
 
 volumes:
   postgres_volume:
