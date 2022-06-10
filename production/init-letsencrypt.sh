@@ -5,7 +5,7 @@ set -e
 # $ chmod +x init-letsencrypt.sh
 # $ init-letsencrypt.sh mydomain.com email@example.com 1
 #
-# Reference: 
+# Reference:
 # https://medium.com/@pentacent/nginx-and-lets-encrypt-with-docker-in-less-than-5-minutes-b4b8a60d3a71
 
 domain=${1}
@@ -30,7 +30,7 @@ if [ ! -e "$data_path/conf/options-ssl-nginx.conf" ] || [ ! -e "$data_path/conf/
 fi
 
 echo "### Removing old certificate for $domain ..."
-docker-compose -f docker-compose.prod.yaml run certbot --rm --entrypoint "\
+docker compose -f docker-compose.prod.yaml run certbot --rm --entrypoint "\
   rm -rf /etc/letsencrypt/live/$domain && \
   rm -rf /etc/letsencrypt/archive/$domain && \
   rm -rf /etc/letsencrypt/renewal/$domain.conf"
@@ -39,7 +39,7 @@ echo
 echo "### Creating dummy certificate for $domain ..."
 path="/etc/letsencrypt/live/$domain"
 mkdir -p "$data_path/conf/live/$domain"
-docker-compose -f docker-compose.prod.yaml run certbot --rm --entrypoint "\
+docker compose -f docker-compose.prod.yaml run certbot --rm --entrypoint "\
   openssl req -x509 -nodes -newkey rsa:1024 -days 1\
     -keyout "$path/privkey.pem" \
     -out "$path/fullchain.pem" \
@@ -47,11 +47,11 @@ docker-compose -f docker-compose.prod.yaml run certbot --rm --entrypoint "\
 echo
 
 echo "### Starting containers ..."
-docker-compose -f docker-compose.prod.yaml up --force-recreate -d
+docker compose -f docker-compose.prod.yaml up --force-recreate -d
 echo
 
 echo "### Deleting dummy certificate for $domain ..."
-docker-compose -f docker-compose.prod.yaml run certbot --rm --entrypoint "\
+docker compose -f docker-compose.prod.yaml run certbot --rm --entrypoint "\
   rm -rf /etc/letsencrypt/live/$domain && \
   rm -rf /etc/letsencrypt/archive/$domain && \
   rm -rf /etc/letsencrypt/renewal/$domain.conf"
@@ -68,7 +68,7 @@ esac
 # Enable staging mode if needed
 if [ $staging != "0" ]; then staging_arg="--staging"; fi
 
-docker-compose -f docker-compose.prod.yaml run certbot --rm --entrypoint "\
+docker compose -f docker-compose.prod.yaml run certbot --rm --entrypoint "\
   certbot certonly --webroot -w /var/www/certbot \
     $staging_arg \
     $email_arg \
@@ -79,8 +79,8 @@ docker-compose -f docker-compose.prod.yaml run certbot --rm --entrypoint "\
 echo
 
 echo "### Reloading nginx ..."
-docker-compose -f docker-compose.prod.yaml exec nginx nginx -s reload
+docker compose -f docker-compose.prod.yaml exec nginx nginx -s reload
 echo
 
 echo "### Stopping containers ..."
-docker-compose -f docker-compose.prod.yaml stop
+docker compose -f docker-compose.prod.yaml stop
