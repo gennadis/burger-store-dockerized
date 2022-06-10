@@ -3,7 +3,7 @@ version: '3.8'
 services:
   backend:
     container_name: burger-star-backend
-    build: ./backend
+    build: ../backend
     restart: always
     command: gunicorn star_burger.wsgi:application --bind 0.0.0.0:8000
     expose:
@@ -18,7 +18,7 @@ services:
 
   frontend:
     container_name: burger-star-frontend
-    build: ./frontend
+    build: ../frontend
     depends_on:
       - backend
 
@@ -37,17 +37,15 @@ services:
     container_name: burger-star-nginx
     image: nginx:1.21-alpine
     restart: always
-    # reload nginx config every 6 hours to obtain updated SSL certificates
-    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
     ports:
       - 80:80
       - 443:443
     volumes:
       - static_volume:/home/burger/web/staticfiles
       - media_volume:/home/burger/web/media
-      - ./production/nginx:/etc/nginx/conf.d
-      - ./production/certbot/conf:/etc/letsencrypt
-      - ./production/certbot/www:/var/www/certbot
+      - ./nginx:/etc/nginx/conf.d
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
     depends_on:
       - backend
 
@@ -58,8 +56,8 @@ services:
     # check if SSL certificate is up for renewal every 12 hours
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
     volumes:
-      - ./production/certbot/conf:/etc/letsencrypt
-      - ./production/certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
 
 volumes:
   postgres_volume:
