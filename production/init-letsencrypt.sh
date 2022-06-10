@@ -1,25 +1,23 @@
 #!/bin/bash
-set -e
 
-# Usage:
-# $ chmod +x init-letsencrypt.sh
-# $ init-letsencrypt.sh mydomain.com email@example.com 1
-#
-# Reference:
-# https://medium.com/@pentacent/nginx-and-lets-encrypt-with-docker-in-less-than-5-minutes-b4b8a60d3a71
+if ! [ -x "$(command -v docker-compose)" ]; then
+  echo 'Error: docker-compose is not installed.' >&2
+  exit 1
+fi
 
-domain=${1}
+domains=(example.org www.example.org)
 rsa_key_size=4096
-data_path="./certbot"
-email=${2:-""}
-staging=${3:-0}
+data_path="./data/certbot"
+email="" # Adding a valid address is strongly recommended
+staging=0 # Set to 1 if you're testing your setup to avoid hitting request limits
 
 if [ -d "$data_path" ]; then
-  read -p "Existing data found for $domain. Continue and replace existing certificate? (y/N) " decision
+  read -p "Existing data found for $domains. Continue and replace existing certificate? (y/N) " decision
   if [ "$decision" != "Y" ] && [ "$decision" != "y" ]; then
     exit
   fi
 fi
+
 
 if [ ! -e "$data_path/conf/options-ssl-nginx.conf" ] || [ ! -e "$data_path/conf/ssl-dhparams.pem" ]; then
   echo "### Downloading recommended TLS parameters ..."
@@ -29,35 +27,35 @@ if [ ! -e "$data_path/conf/options-ssl-nginx.conf" ] || [ ! -e "$data_path/conf/
   echo
 fi
 
-echo "### Removing old certificate for $domain ..."
-docker-compose -f docker-compose.prod.yaml run certbot --rm --entrypoint "\
-  rm -rf /etc/letsencrypt/live/$domain && \
-  rm -rf /etc/letsencrypt/archive/$domain && \
-  rm -rf /etc/letsencrypt/renewal/$domain.conf"
+echo "### Creating dummy certificate for $domains ..."
+path="/etc/letsencrypt/live/$domains"
+mkdir -p "$data_path/conf/live/$domains"
+docker-compose -f docker-compose.prod.yaml run --rm --entrypoint "\
+  openssl req -x509 -nodes -newkey rsa:$rsa_key_size -days 1\
+    -keyout '$path/privkey.pem' \
+    -out '$path/fullchain.pem' \
+    -subj '/CN=localhost'" certbot
 echo
 
-echo "### Creating dummy certificate for $domain ..."
-path="/etc/letsencrypt/live/$domain"
-mkdir -p "$data_path/conf/live/$domain"
-docker compose -f docker-compose.prod.yaml run certbot --rm --entrypoint "\
-  openssl req -x509 -nodes -newkey rsa:1024 -days 1\
-    -keyout "$path/privkey.pem" \
-    -out "$path/fullchain.pem" \
-    -subj '/CN=localhost'"
+
+echo "### Starting nginx ..."
+docker-compose -f docker-compose.prod.yaml up --force-recreate -d nginx
 echo
 
-echo "### Starting containers ..."
-docker-compose -f docker-compose.prod.yaml up --force-recreate -d
+echo "### Deleting dummy certificate for $domains ..."
+docker-compose -f docker-compose.prod.yaml run --rm --entrypoint "\
+  rm -Rf /etc/letsencrypt/live/$domains && \
+  rm -Rf /etc/letsencrypt/archive/$domains && \
+  rm -Rf /etc/letsencrypt/renewal/$domains.conf" certbot
 echo
 
-echo "### Deleting dummy certificate for $domain ..."
-docker-compose -f docker-compose.prod.yaml run certbot --rm --entrypoint "\
-  rm -rf /etc/letsencrypt/live/$domain && \
-  rm -rf /etc/letsencrypt/archive/$domain && \
-  rm -rf /etc/letsencrypt/renewal/$domain.conf"
-echo
 
-echo "### Requesting Let's Encrypt certificate for $domain ..."
+echo "### Requesting Let's Encrypt certificate for $domains ..."
+#Join $domains to -d args
+domain_args=""
+for domain in "${domains[@]}"; do
+  domain_args="$domain_args -d $domain"
+done
 
 # Select appropriate email arg
 case "$email" in
@@ -68,19 +66,15 @@ esac
 # Enable staging mode if needed
 if [ $staging != "0" ]; then staging_arg="--staging"; fi
 
-docker-compose -f docker-compose.prod.yaml run certbot --rm --entrypoint "\
+docker-compose -f docker-compose.prod.yaml run --rm --entrypoint "\
   certbot certonly --webroot -w /var/www/certbot \
     $staging_arg \
     $email_arg \
-    -d $domain \
+    $domain_args \
     --rsa-key-size $rsa_key_size \
     --agree-tos \
-    --force-renewal"
+    --force-renewal" certbot
 echo
 
 echo "### Reloading nginx ..."
 docker-compose -f docker-compose.prod.yaml exec nginx nginx -s reload
-echo
-
-echo "### Stopping containers ..."
-docker-compose -f docker-compose.prod.yaml stop
