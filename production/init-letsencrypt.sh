@@ -1,6 +1,6 @@
 #!/bin/bash
 
-domains=(gennadis.ru www.gennadis.ru)
+domains=(gennadis.ru)
 rsa_key_size=4096
 data_path="./data/certbot"
 email="gennady.badinov@gmail.com" # Adding a valid address is strongly recommended
