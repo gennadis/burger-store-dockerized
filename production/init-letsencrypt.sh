@@ -36,7 +36,7 @@ for domain in "${domains[@]}"; do
 done
 
 echo "### Starting nginx ..."
-docker-compose -f docker-compose.prod.yaml up nginx --force-recreate -d
+docker-compose -f docker-compose.prod.yaml up --force-recreate -d nginx
 echo
   
 for domain in "${domains[@]}"; do
