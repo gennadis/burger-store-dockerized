@@ -23,7 +23,7 @@ fi
 
 for domain in "${domains[@]}"; do
     echo "### Removing old certificate for $domain ..."
-    docker-compose run -f docker-compose.prod.yaml --rm --entrypoint "\
+    docker-compose -f docker-compose.prod.yaml run --rm --entrypoint "\
     rm -Rf /etc/letsencrypt/live/$domain && \
     rm -Rf /etc/letsencrypt/archive/$domain && \
     rm -Rf /etc/letsencrypt/renewal/$domain.conf" certbot
@@ -34,7 +34,7 @@ for domain in "${domains[@]}"; do
     echo "### Creating dummy certificate for $domain ..."
     path="/etc/letsencrypt/live/$domain"
     mkdir -p "$data_path/conf/live/$domain"
-    docker-compose run -f docker-compose.prod.yaml run --rm --entrypoint "\
+    docker-compose -f docker-compose.prod.yaml run --rm --entrypoint "\
     openssl req -x509 -nodes -newkey rsa:1024 -days 1\
       -keyout "$path/privkey.pem" \
       -out "$path/fullchain.pem" \
@@ -48,7 +48,7 @@ echo
 
 for domain in "${domains[@]}"; do
     echo "### Removing dummy certificate for $domain ..."
-    docker-compose run -f docker-compose.prod.yaml run --rm --entrypoint "\
+    docker-compose -f docker-compose.prod.yaml run --rm --entrypoint "\
     rm -Rf /etc/letsencrypt/live/$domain" certbot
     echo
 done
@@ -65,7 +65,7 @@ esac
 if [ $staging != "0" ]; then staging_arg="--staging"; fi
 
 for domain in "${domains[@]}"; do
-    docker-compose run -f docker-compose.prod.yaml run --rm --entrypoint "\
+    docker-compose -f docker-compose.prod.yaml run --rm --entrypoint "\
     certbot certonly --webroot -w /var/www/certbot \
       $staging_arg \
       $email_arg \
@@ -77,4 +77,4 @@ for domain in "${domains[@]}"; do
 done
 
 echo "### Reloading nginx ..."
-docker-compose run -f docker-compose.prod.yaml exec nginx nginx -s reload
+docker-compose -f docker-compose.prod.yaml exec nginx nginx -s reload
