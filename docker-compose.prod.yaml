@@ -36,19 +36,30 @@ services:
   nginx:
     container_name: burger-star-nginx
     image: nginx:1.21-alpine
+    restart: always
+    # reload nginx config every 6 hours to obtain updated SSL certificates
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
     ports:
       - 80:80
       - 443:443
     volumes:
-      - ./production/nginx:/etc/nginx/conf.d
       - static_volume:/home/burger/web/staticfiles
       - media_volume:/home/burger/web/media
-    restart: always
+      - ./production/nginx:/etc/nginx/conf.d
+      - ./production/certbot/conf:/etc/letsencrypt
+      - ./production/certbot/www:/var/www/certbot
     depends_on:
       - backend
 
   certbot:
+    container_name: burger-star-certbot
     image: certbot/certbot
+    restart: always
+    # check if SSL certificate is up for renewal every 12 hours
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    volumes:
+      - ./production/certbot/conf:/etc/letsencrypt
+      - ./production/certbot/www:/var/www/certbot
 
 volumes:
   postgres_volume:
