@@ -31,9 +31,9 @@ fi
 
 echo "### Removing old certificate for $domain ..."
 docker compose -f docker-compose.prod.yaml run --rm --entrypoint "\
-  rm -Rf /etc/letsencrypt/live/$domain && \
-  rm -Rf /etc/letsencrypt/archive/$domain && \
-  rm -Rf /etc/letsencrypt/renewal/$domain.conf" certbot
+  rm -rf /etc/letsencrypt/live/$domain && \
+  rm -rf /etc/letsencrypt/archive/$domain && \
+  rm -rf /etc/letsencrypt/renewal/$domain.conf" certbot
 echo
 
 echo "### Creating dummy certificate for $domain ..."
@@ -51,10 +51,10 @@ docker compose -f docker-compose.prod.yaml up --force-recreate -d
 echo
 
 echo "### Deleting dummy certificate for $domain ..."
-docker-compose -f docker-compose.prod.yaml run --rm --entrypoint "\
-  rm -Rf /etc/letsencrypt/live/$domain && \
-  rm -Rf /etc/letsencrypt/archive/$domain && \
-  rm -Rf /etc/letsencrypt/renewal/$domain.conf" certbot
+docker compose -f docker-compose.prod.yaml run --rm --entrypoint "\
+  rm -rf /etc/letsencrypt/live/$domain && \
+  rm -rf /etc/letsencrypt/archive/$domain && \
+  rm -rf /etc/letsencrypt/renewal/$domain.conf" certbot
 echo
 
 echo "### Requesting Let's Encrypt certificate for $domain ..."
