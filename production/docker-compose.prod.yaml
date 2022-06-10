@@ -32,20 +32,22 @@ services:
       - postgres_volume:/var/lib/postgresql/data/
     env_file:
       - ./.env
-
+  
   nginx:
     image: nginx:1.15-alpine
     restart: unless-stopped
     volumes:
+      - ./data/nginx/conf.d:/etc/nginx/conf.d
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot 
       - static_volume:/home/burger/web/staticfiles
       - media_volume:/home/burger/web/media
-      - ./data/nginx:/etc/nginx/conf.d
-      - ./data/certbot/conf:/etc/letsencrypt
-      - ./data/certbot/www:/var/www/certbot
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
     ports:
       - 80:80
       - 443:443
-    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+    depends_on:
+      - backend
 
   certbot:
     image: certbot/certbot
@@ -53,36 +55,7 @@ services:
     volumes:
       - ./data/certbot/conf:/etc/letsencrypt
       - ./data/certbot/www:/var/www/certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
-
-
-
-
-  # nginx:
-  #   container_name: burger-star-nginx
-  #   image: nginx:1.21-alpine
-  #   restart: always
-  #   ports:
-  #     - 80:80
-  #     - 443:443
-  #   volumes:
-  #     - static_volume:/home/burger/web/staticfiles
-  #     - media_volume:/home/burger/web/media
-  #     - ./nginx:/etc/nginx/conf.d
-  #     - ./certbot/conf:/etc/letsencrypt
-  #     - ./certbot/www:/var/www/certbot
-  #   depends_on:
-  #     - backend
-
-  # certbot:
-  #   container_name: burger-star-certbot
-  #   image: certbot/certbot
-  #   restart: always
-  #   # check if SSL certificate is up for renewal every 12 hours
-  #   entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
-  #   volumes:
-  #     - ./certbot/conf:/etc/letsencrypt
-  #     - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 5d & wait $${!}; done;'"
 
 volumes:
   postgres_volume:
