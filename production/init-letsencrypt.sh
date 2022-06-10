@@ -1,11 +1,6 @@
 #!/bin/bash
 set -e 
 
-if ! [ -x "$(command docker compose version)" ]; then
-  echo 'Error: docker compose is not installed.' >&2
-  exit 1
-fi
-
 domains=(example.org www.example.org)  # change to your domain name
 rsa_key_size=4096
 data_path="./certbot"
