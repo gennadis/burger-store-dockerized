@@ -30,20 +30,20 @@ if [ ! -e "$data_path/conf/options-ssl-nginx.conf" ] || [ ! -e "$data_path/conf/
 fi
 
 echo "### Removing old certificate for $domain ..."
-docker compose -f docker-compose.prod.yaml run --rm --entrypoint "\
+docker compose -f docker-compose.prod.yaml run certbot --rm --entrypoint "\
   rm -rf /etc/letsencrypt/live/$domain && \
   rm -rf /etc/letsencrypt/archive/$domain && \
-  rm -rf /etc/letsencrypt/renewal/$domain.conf" certbot
+  rm -rf /etc/letsencrypt/renewal/$domain.conf"
 echo
 
 echo "### Creating dummy certificate for $domain ..."
 path="/etc/letsencrypt/live/$domain"
 mkdir -p "$data_path/conf/live/$domain"
-docker compose -f docker-compose.prod.yaml run --rm --entrypoint "\
+docker compose -f docker-compose.prod.yaml run certbot --rm --entrypoint "\
   openssl req -x509 -nodes -newkey rsa:1024 -days 1\
     -keyout "$path/privkey.pem" \
     -out "$path/fullchain.pem" \
-    -subj '/CN=localhost'" certbot
+    -subj '/CN=localhost'"
 echo
 
 echo "### Starting containers ..."
@@ -51,10 +51,10 @@ docker compose -f docker-compose.prod.yaml up --force-recreate -d
 echo
 
 echo "### Deleting dummy certificate for $domain ..."
-docker compose -f docker-compose.prod.yaml run --rm --entrypoint "\
+docker compose -f docker-compose.prod.yaml run certbot --rm --entrypoint "\
   rm -rf /etc/letsencrypt/live/$domain && \
   rm -rf /etc/letsencrypt/archive/$domain && \
-  rm -rf /etc/letsencrypt/renewal/$domain.conf" certbot
+  rm -rf /etc/letsencrypt/renewal/$domain.conf"
 echo
 
 echo "### Requesting Let's Encrypt certificate for $domain ..."
@@ -68,14 +68,14 @@ esac
 # Enable staging mode if needed
 if [ $staging != "0" ]; then staging_arg="--staging"; fi
 
-docker compose -f docker-compose.prod.yaml run --rm --entrypoint "\
+docker compose -f docker-compose.prod.yaml run certbot --rm --entrypoint "\
   certbot certonly --webroot -w /var/www/certbot \
     $staging_arg \
     $email_arg \
     -d $domain \
     --rsa-key-size $rsa_key_size \
     --agree-tos \
-    --force-renewal" certbot
+    --force-renewal"
 echo
 
 echo "### Reloading nginx ..."
